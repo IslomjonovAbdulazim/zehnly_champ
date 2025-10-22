@@ -178,7 +178,9 @@ POST /admin/championships/{championship_id}/advance-round
   "championship_id": 1,
   "previous_round": 3,
   "current_round": 4,
-  "message": "Advanced to round 4"
+  "forfeited_games": 2,
+  "new_games_created": 4,
+  "message": "Advanced to round 4. 2 pending games marked as forfeited (both players lose)."
 }
 ```
 

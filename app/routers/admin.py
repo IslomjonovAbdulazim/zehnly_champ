@@ -48,7 +48,7 @@ async def get_championship_games(championship_id: int, db: Session = Depends(get
 # Round Management
 @router.post("/championships/{championship_id}/advance-round")
 async def advance_round(championship_id: int, db: Session = Depends(get_db)):
-    """Advance championship to next round"""
+    """Advance championship to next round - forfeit pending games, create new round"""
     pass
 
 
