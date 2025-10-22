@@ -234,19 +234,44 @@ GET /admin/championships/{championship_id}/stats
 }
 ```
 
+## Authentication
+
+### Admin Login
+```http
+POST /admin/login
+```
+
+**Request Body:**
+```json
+{
+  "email": "admin@gmail.com",
+  "password": "admin123"
+}
+```
+
+**Response:**
+```json
+{
+  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "token_type": "bearer"
+}
+```
+
+**Note:** All admin endpoints require `Authorization: Bearer <token>` header.
+
 ## Error Responses
 
 ### 401 Unauthorized
 ```json
 {
-  "detail": "Admin authentication required"
+  "detail": "Incorrect email or password"
 }
 ```
 
 ### 403 Forbidden
 ```json
 {
-  "detail": "Insufficient admin privileges"
+  "detail": "Not enough permissions"
 }
 ```
 
