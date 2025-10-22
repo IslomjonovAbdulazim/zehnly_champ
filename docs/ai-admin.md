@@ -2,6 +2,11 @@
 
 > Comprehensive guide for AI assistants to understand and build admin interfaces for the tournament management system
 
+## 🌐 API Base URL
+**Production API:** `https://zehnlychamp-production.up.railway.app/`
+
+All API endpoints mentioned in this guide should be prefixed with this base URL.
+
 ## 🏆 System Overview
 
 ### Tournament Concept
@@ -39,8 +44,10 @@ The system uses hardcoded admin credentials from environment variables:
 **Implementation Example:**
 ```javascript
 // Frontend login function
+const BASE_URL = 'https://zehnlychamp-production.up.railway.app';
+
 async function adminLogin(email, password) {
-  const response = await fetch('/admin/login', {
+  const response = await fetch(`${BASE_URL}/admin/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, password })
@@ -78,7 +85,7 @@ headers: {
 **Frontend Implementation:**
 ```javascript
 async function createChampionship(name) {
-  const response = await fetch('/admin/championships', {
+  const response = await fetch(`${BASE_URL}/admin/championships`, {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${token}`,
@@ -106,7 +113,7 @@ async function createChampionship(name) {
 ```javascript
 // Create user
 async function createUser(external_id, fullname, photo_url) {
-  const response = await fetch('/admin/users', {
+  const response = await fetch(`${BASE_URL}/admin/users`, {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${token}`,
@@ -119,7 +126,7 @@ async function createUser(external_id, fullname, photo_url) {
 
 // Get users for pairing
 async function getUsers() {
-  const response = await fetch('/admin/users', {
+  const response = await fetch(`${BASE_URL}/admin/users`, {
     headers: { 'Authorization': `Bearer ${token}` }
   });
   return response.json();
@@ -141,7 +148,7 @@ async function getUsers() {
 **Frontend Implementation:**
 ```javascript
 async function generatePairings(championshipId, userIds) {
-  const response = await fetch(`/admin/championships/${championshipId}/generate-pairings`, {
+  const response = await fetch(`${BASE_URL}/admin/championships/${championshipId}/generate-pairings`, {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${token}`,
@@ -175,7 +182,7 @@ async function generatePairings(championshipId, userIds) {
 ```javascript
 // View games for current round
 async function getRoundGames(championshipId, round) {
-  const response = await fetch(`/admin/championships/${championshipId}/games?round=${round}`, {
+  const response = await fetch(`${BASE_URL}/admin/championships/${championshipId}/games?round=${round}`, {
     headers: { 'Authorization': `Bearer ${token}` }
   });
   return response.json();
@@ -186,7 +193,7 @@ async function advanceRound(championshipId) {
   // Show confirmation dialog first!
   if (!confirm('This will forfeit all pending games. Continue?')) return;
   
-  const response = await fetch(`/admin/championships/${championshipId}/advance-round`, {
+  const response = await fetch(`${BASE_URL}/admin/championships/${championshipId}/advance-round`, {
     method: 'POST',
     headers: { 'Authorization': `Bearer ${token}` }
   });
@@ -212,7 +219,7 @@ async function advanceRound(championshipId) {
 **Frontend Implementation:**
 ```javascript
 async function getChampionships() {
-  const response = await fetch('/admin/championships', {
+  const response = await fetch(`${BASE_URL}/admin/championships`, {
     headers: { 'Authorization': `Bearer ${token}` }
   });
   return response.json();
