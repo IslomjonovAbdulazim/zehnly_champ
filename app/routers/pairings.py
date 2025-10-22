@@ -9,15 +9,3 @@ router = APIRouter(prefix="/pairings", tags=["pairings"])
 async def get_pairing(pairing_id: int, db: Session = Depends(get_db)):
     """Get specific pairing details"""
     pass
-
-
-@router.get("/{pairing_id}/games")
-async def get_pairing_games(pairing_id: int, db: Session = Depends(get_db)):
-    """Get all games for a pairing"""
-    pass
-
-
-@router.put("/{pairing_id}")
-async def update_pairing(pairing_id: int, db: Session = Depends(get_db)):
-    """Update pairing status"""
-    pass
