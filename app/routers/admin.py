@@ -190,41 +190,40 @@ async def generate_pairings(
     }
 
 
-# Game Viewing
-@router.get("/championships/{championship_id}/games")
-async def get_championship_games(
-    championship_id: int, 
-    round: int = None,
+# Pairing Viewing  
+@router.get("/championships/{championship_id}/pairings")
+async def get_championship_pairings(
+    championship_id: int,
     db: Session = Depends(get_db),
     current_admin = Depends(get_current_admin)
 ):
-    """Get all games for championship (filter by round optional)"""
-    query = db.query(Game).join(Pairing).filter(Pairing.championship_id == championship_id)
+    """Get all pairings with their scores for championship"""
+    championship = db.query(Championship).filter(Championship.id == championship_id).first()
+    if not championship:
+        raise HTTPException(status_code=404, detail="Championship not found")
     
-    if round:
-        query = query.filter(Game.round_number == round)
-    
-    games = query.all()
+    pairings = db.query(Pairing).filter(Pairing.championship_id == championship_id).all()
     
     result = []
-    for game in games:
+    for pairing in pairings:
+        total_games = pairing.player1_wins + pairing.player2_wins
+        
         result.append({
-            "id": game.id,
-            "external_id": game.external_id,
-            "round_number": game.round_number,
-            "pairing": {
-                "id": game.pairing.id,
-                "player1": {
-                    "id": game.pairing.player1.id,
-                    "fullname": game.pairing.player1.fullname
-                },
-                "player2": {
-                    "id": game.pairing.player2.id,
-                    "fullname": game.pairing.player2.fullname
-                }
+            "id": pairing.id,
+            "player1": {
+                "id": pairing.player1.id,
+                "fullname": pairing.player1.fullname,
+                "photo_url": pairing.player1.photo_url
             },
-            "winner_id": game.winner_id,
-            "is_finished": game.is_finished
+            "player2": {
+                "id": pairing.player2.id,
+                "fullname": pairing.player2.fullname,
+                "photo_url": pairing.player2.photo_url
+            },
+            "player1_wins": pairing.player1_wins,
+            "player2_wins": pairing.player2_wins,
+            "total_games": total_games,
+            "status": pairing.status
         })
     
     return result
@@ -337,47 +336,6 @@ async def get_championship_stats(
     for round_num, count in rounds_data:
         games_by_round[str(round_num)] = count
     
-    # Leaderboard
-    leaderboard = []
-    pairings = db.query(Pairing).filter(Pairing.championship_id == championship_id).all()
-    
-    user_stats = {}
-    for pairing in pairings:
-        # Player 1 stats
-        if pairing.player1_id not in user_stats:
-            user_stats[pairing.player1_id] = {
-                "user": pairing.player1,
-                "wins": 0,
-                "losses": 0,
-                "status": "active"
-            }
-        user_stats[pairing.player1_id]["wins"] += pairing.player1_wins
-        user_stats[pairing.player1_id]["losses"] += pairing.player2_wins
-        
-        # Player 2 stats
-        if pairing.player2_id not in user_stats:
-            user_stats[pairing.player2_id] = {
-                "user": pairing.player2,
-                "wins": 0,
-                "losses": 0,
-                "status": "active"
-            }
-        user_stats[pairing.player2_id]["wins"] += pairing.player2_wins
-        user_stats[pairing.player2_id]["losses"] += pairing.player1_wins
-    
-    for user_id, stats in user_stats.items():
-        leaderboard.append({
-            "user": {
-                "id": stats["user"].id,
-                "fullname": stats["user"].fullname
-            },
-            "wins": stats["wins"],
-            "losses": stats["losses"],
-            "status": stats["status"]
-        })
-    
-    # Sort by wins descending
-    leaderboard.sort(key=lambda x: x["wins"], reverse=True)
     
     return {
         "championship": {
@@ -400,6 +358,5 @@ async def get_championship_stats(
             "finished": finished_games,
             "pending": pending_games,
             "by_round": games_by_round
-        },
-        "leaderboard": leaderboard
+        }
     }
