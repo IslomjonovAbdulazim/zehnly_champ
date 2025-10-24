@@ -28,3 +28,8 @@ class GeneratePairings(BaseModel):
 class GameResult(BaseModel):
     external_id: str
     winner_external_id: str
+
+
+class GameStart(BaseModel):
+    id: int
+    external_id: str

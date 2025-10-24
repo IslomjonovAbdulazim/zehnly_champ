@@ -1,16 +1,38 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.database import get_db
-from app.schemas import GameResult
+from app.schemas import GameResult, GameStart
 from app.models import Game, User, Pairing
 
 router = APIRouter(prefix="/games", tags=["games"])
 
 
 @router.post("/start")
-async def start_game(db: Session = Depends(get_db)):
+async def start_game(game_start: GameStart, db: Session = Depends(get_db)):
     """Start a new game/match - called by external backend"""
-    pass
+    # Find game by id
+    game = db.query(Game).filter(Game.id == game_start.id).first()
+    if not game:
+        raise HTTPException(status_code=404, detail="Game not found")
+    
+    # Check if external_id is already set
+    if game.external_id:
+        raise HTTPException(status_code=400, detail="Game already has external_id")
+    
+    # Update external_id
+    game.external_id = game_start.external_id
+    
+    db.commit()
+    db.refresh(game)
+    
+    return {
+        "id": game.id,
+        "external_id": game.external_id,
+        "pairing_id": game.pairing_id,
+        "round_number": game.round_number,
+        "winner_id": game.winner_id,
+        "is_finished": game.is_finished
+    }
 
 
 @router.post("/result")
