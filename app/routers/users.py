@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.database import get_db
+from app.models import User, Championship, UserChampionship, Pairing
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -14,7 +15,74 @@ async def get_user(user_id: str, db: Session = Depends(get_db)):
 @router.get("/{user_id}/tournaments")
 async def get_user_tournaments(user_id: str, db: Session = Depends(get_db)):
     """Get user tournament status"""
-    pass
+    # Find user by external_id
+    user = db.query(User).filter(User.external_id == user_id).first()
+    if not user:
+        return None
+    
+    # Get active championship
+    active_championship = db.query(Championship).filter(Championship.status == "active").first()
+    if not active_championship:
+        return None
+    
+    # Check if user is in this championship
+    user_championship = db.query(UserChampionship).filter(
+        UserChampionship.user_id == user.id,
+        UserChampionship.championship_id == active_championship.id
+    ).first()
+    
+    # If user is not in championship, return championship info without opponent
+    if not user_championship:
+        return {
+            "championship": {
+                "id": active_championship.id,
+                "name": active_championship.name,
+                "status": active_championship.status
+            },
+            "user_status": None,
+            "wins": 0,
+            "losses": 0
+        }
+    
+    # User is in championship, get opponent and stats
+    # Find pairing for this user
+    pairing = db.query(Pairing).filter(
+        Pairing.championship_id == active_championship.id,
+        ((Pairing.player1_id == user.id) | (Pairing.player2_id == user.id))
+    ).first()
+    
+    result = {
+        "championship": {
+            "id": active_championship.id,
+            "name": active_championship.name,
+            "status": active_championship.status
+        },
+        "user_status": user_championship.status,
+        "wins": 0,
+        "losses": 0
+    }
+    
+    # Add opponent and win/loss stats if pairing exists
+    if pairing:
+        # Determine opponent
+        if pairing.player1_id == user.id:
+            opponent = pairing.player2
+            result["wins"] = pairing.player1_wins
+            result["losses"] = pairing.player2_wins
+        else:
+            opponent = pairing.player1
+            result["wins"] = pairing.player2_wins
+            result["losses"] = pairing.player1_wins
+        
+        # Add opponent info
+        result["opponent"] = {
+            "id": opponent.id,
+            "external_id": opponent.external_id,
+            "fullname": opponent.fullname,
+            "photo_url": opponent.photo_url
+        }
+    
+    return result
 
 
 @router.get("/{user_id}/games")
