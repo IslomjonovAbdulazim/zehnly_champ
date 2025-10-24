@@ -1,6 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.database import get_db
+from app.schemas import GameResult
+from app.models import Game, User, Pairing
 
 router = APIRouter(prefix="/games", tags=["games"])
 
@@ -12,9 +14,55 @@ async def start_game(db: Session = Depends(get_db)):
 
 
 @router.post("/result")
-async def receive_game_result(db: Session = Depends(get_db)):
+async def receive_game_result(game_result: GameResult, db: Session = Depends(get_db)):
     """Receive match result from external backend"""
-    pass
+    # Find game by external_id
+    game = db.query(Game).filter(Game.external_id == game_result.external_id).first()
+    if not game:
+        raise HTTPException(status_code=404, detail="Game not found")
+    
+    # Check if game is already finished
+    if game.is_finished:
+        raise HTTPException(status_code=400, detail="Game already finished")
+    
+    # Find winner by external_id
+    winner = db.query(User).filter(User.external_id == game_result.winner_external_id).first()
+    if not winner:
+        raise HTTPException(status_code=404, detail="Winner not found")
+    
+    # Get the pairing
+    pairing = game.pairing
+    
+    # Verify winner is part of this pairing
+    if winner.id not in [pairing.player1_id, pairing.player2_id]:
+        raise HTTPException(status_code=400, detail="Winner is not part of this game")
+    
+    # Update game
+    game.winner_id = winner.id
+    game.is_finished = True
+    
+    # Update pairing win counts
+    if winner.id == pairing.player1_id:
+        pairing.player1_wins += 1
+    else:
+        pairing.player2_wins += 1
+    
+    db.commit()
+    db.refresh(game)
+    db.refresh(pairing)
+    
+    return {
+        "id": game.id,
+        "external_id": game.external_id,
+        "pairing_id": game.pairing_id,
+        "round_number": game.round_number,
+        "winner_id": game.winner_id,
+        "is_finished": game.is_finished,
+        "pairing_updated": {
+            "player1_wins": pairing.player1_wins,
+            "player2_wins": pairing.player2_wins
+        }
+    }
 
 
 @router.get("/{game_id}")

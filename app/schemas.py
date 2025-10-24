@@ -23,3 +23,8 @@ class UserCreate(BaseModel):
 
 class GeneratePairings(BaseModel):
     user_ids: list[int]
+
+
+class GameResult(BaseModel):
+    external_id: str
+    winner_external_id: str
