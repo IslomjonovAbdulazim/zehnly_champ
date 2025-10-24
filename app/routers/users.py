@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 from app.database import get_db
-from app.models import User, Championship, UserChampionship, Pairing
+from app.models import User, Championship, UserChampionship, Pairing, Game
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -34,6 +35,10 @@ async def get_user_tournaments(user_id: str, db: Session = Depends(get_db)):
     # If user is not in championship, return championship info without opponent
     if not user_championship:
         return {
+            "user": {
+                "id": user.id,
+                "external_id": user.external_id
+            },
             "championship": {
                 "id": active_championship.id,
                 "name": active_championship.name,
@@ -51,13 +56,25 @@ async def get_user_tournaments(user_id: str, db: Session = Depends(get_db)):
         ((Pairing.player1_id == user.id) | (Pairing.player2_id == user.id))
     ).first()
     
+    # Get current round number
+    current_round = db.query(func.max(Game.round_number)).filter(
+        Game.pairing_id.in_(
+            db.query(Pairing.id).filter(Pairing.championship_id == active_championship.id)
+        )
+    ).scalar() or 1
+    
     result = {
+        "user": {
+            "id": user.id,
+            "external_id": user.external_id
+        },
         "championship": {
             "id": active_championship.id,
             "name": active_championship.name,
             "status": active_championship.status
         },
         "user_status": user_championship.status,
+        "current_round": current_round,
         "wins": 0,
         "losses": 0
     }
@@ -81,6 +98,17 @@ async def get_user_tournaments(user_id: str, db: Session = Depends(get_db)):
             "fullname": opponent.fullname,
             "photo_url": opponent.photo_url
         }
+        
+        # Get current game status
+        current_game = db.query(Game).filter(
+            Game.pairing_id == pairing.id,
+            Game.round_number == current_round
+        ).first()
+        
+        if current_game:
+            result["game_status"] = "finished" if current_game.is_finished else "pending"
+        else:
+            result["game_status"] = "not_started"
     
     return result
 

@@ -37,12 +37,17 @@ GET /users/68e53d2db1e331166a013e92/tournaments
 **Response when user is in active tournament:**
 ```json
 {
+  "user": {
+    "id": 123,
+    "external_id": "player_abc123"
+  },
   "championship": {
     "id": 1,
     "name": "Spring Tournament 2024",
     "status": "active"
   },
   "user_status": "active",
+  "current_round": 3,
   "opponent": {
     "id": 124,
     "external_id": "player_xyz456",
@@ -50,13 +55,18 @@ GET /users/68e53d2db1e331166a013e92/tournaments
     "photo_url": "https://example.com/photo2.jpg"
   },
   "wins": 3,
-  "losses": 2
+  "losses": 2,
+  "game_status": "pending"
 }
 ```
 
 **Response when user exists but not in any tournament:**
 ```json
 {
+  "user": {
+    "id": 123,
+    "external_id": "player_abc123"
+  },
   "championship": {
     "id": 1,
     "name": "Spring Tournament 2024",
@@ -79,6 +89,8 @@ null
 - `user_status` can be: "active", "eliminated", "waiting", or null if not participating
 - `opponent` is only included when user is actively matched in a tournament
 - `wins` and `losses` are 0 when user not in tournament
+- `game_status` can be: "pending", "finished", or "not_started"
+- `current_round` shows the current round number of the championship
 
 ## Match Results
 
