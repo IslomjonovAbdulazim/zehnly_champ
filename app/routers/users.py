@@ -56,19 +56,24 @@ async def get_user_tournaments(user_id: str, db: Session = Depends(get_db)):
         ((Pairing.player1_id == user.id) | (Pairing.player2_id == user.id))
     ).first()
     
-    # Get current round number - use championship-wide max round
-    current_round = db.query(func.max(Game.round_number)).filter(
-        Game.pairing_id.in_(
-            db.query(Pairing.id).filter(Pairing.championship_id == active_championship.id)
-        )
-    ).scalar() or 1
+    # Get current round number - use pairing-specific max round if pairing exists
+    if pairing:
+        current_round = db.query(func.max(Game.round_number)).filter(
+            Game.pairing_id == pairing.id
+        ).scalar() or 1
+    else:
+        # Fallback to championship-wide max round if no pairing
+        current_round = db.query(func.max(Game.round_number)).filter(
+            Game.pairing_id.in_(
+                db.query(Pairing.id).filter(Pairing.championship_id == active_championship.id)
+            )
+        ).scalar() or 1
     
     # Debug logging
     print(f"🔍 User {user.id} in championship {active_championship.id}")
-    print(f"🔍 Championship {active_championship.id} current_round: {current_round}")
+    print(f"🔍 Current round for user: {current_round}")
     if pairing:
         print(f"🔍 Found pairing {pairing.id}: player1={pairing.player1_id}, player2={pairing.player2_id}")
-        print(f"🔍 Pairing {pairing.id} max round: {db.query(func.max(Game.round_number)).filter(Game.pairing_id == pairing.id).scalar()}")
         print(f"🔍 Pairing wins: player1_wins={pairing.player1_wins}, player2_wins={pairing.player2_wins}")
     else:
         print(f"❌ No pairing found for user {user.id} in championship {active_championship.id}")
