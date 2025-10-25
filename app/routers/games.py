@@ -38,25 +38,33 @@ async def start_game(game_start: GameStart, db: Session = Depends(get_db)):
 @router.post("/result")
 async def receive_game_result(game_result: GameResult, db: Session = Depends(get_db)):
     """Receive match result from external backend"""
+    print(f"🎮 Game Result Request: external_id={game_result.external_id}, winner_external_id={game_result.winner_external_id}")
+    
     # Find game by external_id
     game = db.query(Game).filter(Game.external_id == game_result.external_id).first()
     if not game:
+        print(f"❌ Game not found: {game_result.external_id}")
         raise HTTPException(status_code=404, detail="Game not found")
     
     # Check if game is already finished
     if game.is_finished:
+        print(f"❌ Game already finished: {game_result.external_id}")
         raise HTTPException(status_code=400, detail="Game already finished")
     
     # Find winner by external_id
     winner = db.query(User).filter(User.external_id == game_result.winner_external_id).first()
     if not winner:
+        print(f"❌ Winner not found: {game_result.winner_external_id}")
         raise HTTPException(status_code=404, detail="Winner not found")
     
     # Get the pairing
     pairing = game.pairing
+    print(f"🔍 Pairing players: player1_id={pairing.player1_id}, player2_id={pairing.player2_id}")
+    print(f"🔍 Winner: id={winner.id}, external_id={winner.external_id}")
     
     # Verify winner is part of this pairing
     if winner.id not in [pairing.player1_id, pairing.player2_id]:
+        print(f"❌ Winner {winner.id} not in pairing [{pairing.player1_id}, {pairing.player2_id}]")
         raise HTTPException(status_code=400, detail="Winner is not part of this game")
     
     # Update game
@@ -73,7 +81,7 @@ async def receive_game_result(game_result: GameResult, db: Session = Depends(get
     db.refresh(game)
     db.refresh(pairing)
     
-    return {
+    result = {
         "id": game.id,
         "external_id": game.external_id,
         "pairing_id": game.pairing_id,
@@ -85,6 +93,9 @@ async def receive_game_result(game_result: GameResult, db: Session = Depends(get
             "player2_wins": pairing.player2_wins
         }
     }
+    
+    print(f"✅ Game result success: {result}")
+    return result
 
 
 @router.get("/{game_id}")
