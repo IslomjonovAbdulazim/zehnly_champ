@@ -15,8 +15,8 @@ async def start_game(game_start: GameStart, db: Session = Depends(get_db)):
     if not game:
         raise HTTPException(status_code=404, detail="Game not found")
     
-    # Check if external_id is already set
-    if game.external_id:
+    # Check if external_id is already set with proper MongoDB ObjectId (24 chars)
+    if game.external_id and len(game.external_id) >= 24:
         raise HTTPException(status_code=400, detail="Game already has external_id")
     
     # Update external_id
