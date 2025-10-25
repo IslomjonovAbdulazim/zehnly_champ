@@ -122,8 +122,10 @@ async def get_user_tournaments(user_id: str, db: Session = Depends(get_db)):
         
         if current_game:
             result["game_status"] = "finished" if current_game.is_finished else "pending"
+            result["game_id"] = current_game.id
         else:
             result["game_status"] = "not_started"
+            result["game_id"] = None
     
     return result
 
