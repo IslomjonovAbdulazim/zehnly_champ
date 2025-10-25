@@ -42,7 +42,8 @@ async def get_user_tournaments(user_id: str, db: Session = Depends(get_db)):
             "championship": {
                 "id": active_championship.id,
                 "name": active_championship.name,
-                "status": active_championship.status
+                "status": active_championship.status,
+                "start_date": active_championship.start_date.isoformat() if active_championship.start_date else None
             },
             "user_status": None,
             "wins": 0,
@@ -86,7 +87,8 @@ async def get_user_tournaments(user_id: str, db: Session = Depends(get_db)):
         "championship": {
             "id": active_championship.id,
             "name": active_championship.name,
-            "status": active_championship.status
+            "status": active_championship.status,
+            "start_date": active_championship.start_date.isoformat() if active_championship.start_date else None
         },
         "user_status": user_championship.status,
         "current_round": current_round,
