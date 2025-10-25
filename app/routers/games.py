@@ -15,22 +15,16 @@ async def start_game(game_start: GameStart, db: Session = Depends(get_db)):
     if not game:
         raise HTTPException(status_code=404, detail="Game not found")
     
-    # Always allow updating external_id
+    # Check if external_id is already set
+    if game.external_id and len(game.external_id) >= 20:
+        # Already has long external_id (20+ chars) - game already started
+        return {"started": True}
     
-    # Update external_id
+    # Update external_id (no external_id or short external_id)
     game.external_id = game_start.external_id
-    
     db.commit()
-    db.refresh(game)
     
-    return {
-        "id": game.id,
-        "external_id": game.external_id,
-        "pairing_id": game.pairing_id,
-        "round_number": game.round_number,
-        "winner_id": game.winner_id,
-        "is_finished": game.is_finished
-    }
+    return {"started": False}
 
 
 @router.post("/result")
