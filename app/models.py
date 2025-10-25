@@ -1,7 +1,8 @@
-from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, UniqueConstraint, CheckConstraint
+from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, UniqueConstraint, CheckConstraint, DateTime
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from enum import Enum as PyEnum
+from datetime import datetime
 
 Base = declarative_base()
 
@@ -22,6 +23,7 @@ class Championship(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False)
     status = Column(String, nullable=False, default=ChampionshipStatus.ACTIVE.value)
+    start_date = Column(DateTime, nullable=True, default=datetime(2025, 10, 29, 19, 0))
     
     # Relationships
     pairings = relationship("Pairing", back_populates="championship", cascade="all, delete-orphan")

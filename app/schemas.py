@@ -1,4 +1,6 @@
 from pydantic import BaseModel
+from datetime import datetime
+from typing import Optional
 
 
 class AdminLogin(BaseModel):
@@ -13,6 +15,7 @@ class Token(BaseModel):
 
 class ChampionshipCreate(BaseModel):
     name: str
+    start_date: Optional[datetime] = None
 
 
 class UserCreate(BaseModel):
