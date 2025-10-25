@@ -64,9 +64,14 @@ async def get_user_tournaments(user_id: str, db: Session = Depends(get_db)):
     ).scalar() or 1
     
     # Debug logging
+    print(f"🔍 User {user.id} in championship {active_championship.id}")
     print(f"🔍 Championship {active_championship.id} current_round: {current_round}")
     if pairing:
+        print(f"🔍 Found pairing {pairing.id}: player1={pairing.player1_id}, player2={pairing.player2_id}")
         print(f"🔍 Pairing {pairing.id} max round: {db.query(func.max(Game.round_number)).filter(Game.pairing_id == pairing.id).scalar()}")
+        print(f"🔍 Pairing wins: player1_wins={pairing.player1_wins}, player2_wins={pairing.player2_wins}")
+    else:
+        print(f"❌ No pairing found for user {user.id} in championship {active_championship.id}")
     
     result = {
         "user": {
