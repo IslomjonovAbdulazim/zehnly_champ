@@ -56,12 +56,18 @@ async def get_user_tournaments(user_id: str, db: Session = Depends(get_db)):
         ((Pairing.player1_id == user.id) | (Pairing.player2_id == user.id))
     ).first()
     
-    # Get current round number
-    current_round = db.query(func.max(Game.round_number)).filter(
-        Game.pairing_id.in_(
-            db.query(Pairing.id).filter(Pairing.championship_id == active_championship.id)
-        )
-    ).scalar() or 1
+    # Get current round number - find the latest round for this specific pairing
+    if pairing:
+        current_round = db.query(func.max(Game.round_number)).filter(
+            Game.pairing_id == pairing.id
+        ).scalar() or 1
+    else:
+        # No pairing means user not in tournament, get max round from championship
+        current_round = db.query(func.max(Game.round_number)).filter(
+            Game.pairing_id.in_(
+                db.query(Pairing.id).filter(Pairing.championship_id == active_championship.id)
+            )
+        ).scalar() or 1
     
     result = {
         "user": {
