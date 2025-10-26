@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, validator
 from datetime import datetime
 from typing import Optional
 
@@ -36,3 +36,13 @@ class GameResult(BaseModel):
 class GameStart(BaseModel):
     id: int
     external_id: str
+
+
+class ChampionshipStatusUpdate(BaseModel):
+    status: str
+    
+    @validator('status')
+    def validate_status(cls, v):
+        if v not in ['active', 'inactive']:
+            raise ValueError('Status must be either "active" or "inactive"')
+        return v

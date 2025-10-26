@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 from app.database import get_db
 from app.auth import verify_admin_credentials, create_access_token, get_current_admin
-from app.schemas import AdminLogin, Token, ChampionshipCreate, UserCreate, GeneratePairings
+from app.schemas import AdminLogin, Token, ChampionshipCreate, UserCreate, GeneratePairings, ChampionshipStatusUpdate
 from app.models import Championship, User, UserChampionship, Pairing, Game
 import random
 
@@ -82,6 +82,32 @@ async def list_championships(
         })
     
     return result
+
+
+@router.put("/championships/{championship_id}/status")
+async def update_championship_status(
+    championship_id: int,
+    status_update: ChampionshipStatusUpdate,
+    db: Session = Depends(get_db),
+    current_admin = Depends(get_current_admin)
+):
+    """Update championship status (active/inactive)"""
+    # Find championship
+    championship = db.query(Championship).filter(Championship.id == championship_id).first()
+    if not championship:
+        raise HTTPException(status_code=404, detail="Championship not found")
+    
+    # Update status
+    championship.status = status_update.status
+    db.commit()
+    db.refresh(championship)
+    
+    return {
+        "id": championship.id,
+        "name": championship.name,
+        "status": championship.status,
+        "message": "Championship status updated successfully"
+    }
 
 
 # User Management
