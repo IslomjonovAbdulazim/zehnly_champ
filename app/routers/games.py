@@ -19,11 +19,16 @@ async def start_game(game_start: GameStart, db: Session = Depends(get_db)):
     if game.external_id == game_start.external_id:
         return {"started": False}  # Same external_id
     
-    # Different external_id - update and return true
+    # Different external_id - check if current one is 20+ characters
+    if game.external_id and len(game.external_id) >= 20:
+        # Don't update if current external_id is 20+ characters (real ID) - return true (busy)
+        return {"started": True}
+    
+    # Update external_id only if current one is less than 20 characters (or null)
     game.external_id = game_start.external_id
     db.commit()
     
-    return {"started": True}
+    return {"started": False}
 
 
 @router.post("/result")
